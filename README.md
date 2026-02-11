@@ -43,3 +43,14 @@ Create an account in https://www.themoviedb.org/, click on the `API` link from t
 Please do ⭐ the repository, if it helped you in anyway.
 
 # Project_Cinema
+
+
+
+
+
+11-feb
+##### Incase nework error occur
+1. go to the cntrl panel
+2. select 'Network and Sharing Center'
+3. in connections->properties
+4. disable ipv6 and in properties of ipv4 use custom dns-preffered-'1.1.1.1' and alternaive as '1.0.0.1'
