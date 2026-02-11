@@ -1,5 +1,5 @@
 // Replace 'YOUR_API_KEY' below with your API key retrieved from https://www.themoviedb.org
-var myAPI = ''; // global string to be consistent with future usages elsewhere
+var myAPI = 'f29ab3f35cb7c95600c11df45583e6b9'; // global string to be consistent with future usages elsewhere
 
 $(function () {
   $('#movie_list').css('display', 'none');

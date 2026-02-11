@@ -9,17 +9,19 @@ import urllib.request
 import pickle
 import requests
 from datetime import date, datetime
+from urllib.request import Request, urlopen
+import joblib
 
 
 
 
-TMDB_KEY = ""
+TMDB_KEY = "f29ab3f35cb7c95600c11df45583e6b9"
 
 
 # load the nlp model and tfidf vectorizer from disk
-filename = 'nlp_model.pkl'
-clf = pickle.load(open(filename, 'rb'))
-vectorizer = pickle.load(open('tranform.pkl','rb'))
+
+vectorizer = joblib.load("transform.pkl")
+clf = joblib.load("nlp_model.pkl")
     
 # converting list of string to list (eg. "["abc","def"]" to ["abc","def"])
 def convert_to_list(my_list):
@@ -64,7 +66,7 @@ def populate_matches():
 
 @app.route("/recommend",methods=["POST"])
 def recommend():
-    print("Recommend route hit")
+    
     print("Movie title received:", request.form.get('title'))
     print("IMDB ID:", request.form.get('imdb_id'))
     # getting data from AJAX request
@@ -127,37 +129,72 @@ def recommend():
 
     cast_details = {cast_names[i]:[cast_ids[i], cast_profiles[i], cast_bdays[i], cast_places[i], cast_bios[i]] for i in range(len(cast_places))}
 
-    if(imdb_id != ""):
-        # web scraping to get user reviews from IMDB site
-        sauce = urllib.request.urlopen('https://www.imdb.com/title/{}/reviews?ref_=tt_ov_rt'.format(imdb_id)).read()
-        soup = bs.BeautifulSoup(sauce,'lxml')
-        soup_result = soup.find_all("div",{"class":"text show-more__control"})
+    if imdb_id != "":
+        print("fetching sauce-soup for reviews")
 
-        reviews_list = [] # list of reviews
-        reviews_status = [] # list of comments (good or bad)
-        for reviews in soup_result:
-            if reviews.string:
-                reviews_list.append(reviews.string)
-                # passing the review to our model
-                movie_review_list = np.array([reviews.string])
+        url = f"https://www.imdb.com/title/{imdb_id}/reviews?ref_=tt_ov_rt"
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+                        "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Accept-Language": "en-US,en;q=0.9",
+        }
+
+        req = Request(url, headers=headers)
+        sauce = urlopen(req, timeout=15).read()
+        soup = bs.BeautifulSoup(sauce, 'lxml')
+
+        # ✅ UPDATED SELECTOR – target the actual review text
+        soup_result = soup.select('div[data-testid^="review-card"] div.ipc-html-content-inner-div')
+
+        print("sauce", len(sauce))
+        print(soup.title)
+        print("Total reviews found:", len(soup_result))
+        if soup_result:
+            print("Sample review:", soup_result[0].get_text(strip=True)[:200])
+
+        reviews_list = []
+        reviews_status = []
+
+        for review_div in soup_result:
+            review_text = review_div.get_text(strip=True)
+            if review_text:
+                reviews_list.append(review_text)
+
+                movie_review_list = np.array([review_text])
                 movie_vector = vectorizer.transform(movie_review_list)
                 pred = clf.predict(movie_vector)
-                reviews_status.append('Positive' if pred else 'Negative')
+
+                reviews_status.append('Positive' if pred[0] == 1 else 'Negative')
 
         # getting current date
         movie_rel_date = ""
         curr_date = ""
-        if(rel_date):
+        if rel_date:
             today = str(date.today())
-            curr_date = datetime.strptime(today,'%Y-%m-%d')
+            curr_date = datetime.strptime(today, '%Y-%m-%d')
             movie_rel_date = datetime.strptime(rel_date, '%Y-%m-%d')
 
         # combining reviews and comments into a dictionary
-        movie_reviews = {reviews_list[i]: reviews_status[i] for i in range(len(reviews_list))}     
+        movie_reviews = {reviews_list[i]: reviews_status[i] for i in range(len(reviews_list))}
 
-        # passing all the data to the html file
-        return render_template('recommend.html',title=title,poster=poster,overview=overview,vote_average=vote_average,
-            vote_count=vote_count,release_date=release_date,movie_rel_date=movie_rel_date,curr_date=curr_date,runtime=runtime,status=status,genres=genres,movie_cards=movie_cards,reviews=movie_reviews,casts=casts,cast_details=cast_details)
+        return render_template(
+            'recommend.html',
+            title=title,
+            poster=poster,
+            overview=overview,
+            vote_average=vote_average,
+            vote_count=vote_count,
+            release_date=release_date,
+            movie_rel_date=movie_rel_date,
+            curr_date=curr_date,
+            runtime=runtime,
+            status=status,
+            genres=genres,
+            movie_cards=movie_cards,
+            reviews=movie_reviews,
+            casts=casts,
+            cast_details=cast_details
+        )
 
     else:
         return render_template('recommend.html',title=title,poster=poster,overview=overview,vote_average=vote_average,

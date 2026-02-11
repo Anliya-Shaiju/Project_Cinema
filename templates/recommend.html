@@ -114,55 +114,47 @@
     {% endif %}
     <br/>
 
-  <center>
-    {% if reviews %}
-    <h2 style="font-family: 'Rowdies', cursive;color:white">USER REVIEWS</h2>
-     <div class="col-md-12" style="margin: 0 auto; margin-top:25px;">
-        <table class="table table-bordered" bordercolor="white" style="color:white">
-            <thead>
-                <tr>
-                  <th class="text-center" scope="col" style="width: 75%">Comments</th>
-                  <th class="text-center" scope="col">Sentiments</th>
-                </tr>
-            </thead>
-    
-          <tbody>
-	    {% for review, status in reviews.items() if not reviews.hidden %}
-    	        <tr style="background-color:#e5091485;">
-                <td>{{review}}</td>
-                <td>
-                  <center>
-                    {{status}} : 
-                    {% if status =='Positive' %}
-                      &#128515;
-                    {% else %}
-                      &#128534;
-                    {% endif %}
-                  </center>
-                </td>
-            	</tr>
-      	    {% endfor %}
-    		  </tbody>
- 		    </table>
-     </div>
+<div class="container mt-4">
+  {% if reviews %}
+    <h2 class="text-center mb-4" style="font-family: 'Rowdies', cursive; color:#f5f5f5;">
+      User Reviews
+    </h2>
 
-    {% if (curr_date) and (movie_rel_date) %}
-      {% elif curr_date < movie_rel_date %}
-      <div style="color:white;">
-        <h1 style="color:white"> This movie is not released yet. Stay tuned! </h1>
-      </div>
-      {% else %}
-      <div style="color:white;">
-        <h1 style="color:white"> Sorry, the reviews for this movie are not available! :( </h1>
-      </div>
-      {% endif %}
-    {% else %}
-      <div style="color:white;">
-        <h1 style="color:white"> Sorry, the reviews for this movie are not available! :( </h1>
-      </div>
-    {% endif %}
-  </center>
-  <br/>
+    <div class="table-responsive">
+      <table class="table table-hover table-dark" style="border-radius:12px; overflow:hidden;">
+        <thead style="background: linear-gradient(135deg, #1f1f1f, #2c2c2c);">
+          <tr>
+            <th class="text-center" style="width: 75%">Comments</th>
+            <th class="text-center">Sentiment</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {% for review, status in reviews.items() %}
+          <tr style="background-color:#1b1b1b;">
+            <td style="line-height:1.6; color:#e0e0e0;">
+              {{ review }}
+            </td>
+            <td class="text-center" style="font-weight:600;">
+              {% if status == 'Positive' %}
+                <span style="color:#4CAF50;">Positive &#128515;</span>
+              {% else %}
+                <span style="color:#FF6B6B;">Negative &#128534;</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+  {% else %}
+    <div class="text-center" style="color:white;">
+      <h3>Sorry, the reviews for this movie are not available 😕</h3>
+    </div>
+  {% endif %}
+</div>
+<br>
    
  
     {% if movie_cards|length > 1 %}
